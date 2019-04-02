@@ -8,9 +8,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Scanner;
 
-public class Client {
+public class Client extends Thread{
     static Socket client;
-    private static BufferedReader in;
     private static BufferedWriter out;
     public static void main(String[] args){
         try {
@@ -22,21 +21,68 @@ public class Client {
             int port = scanner.nextInt();
             client = new Socket(InetAddress.getByName(ipAddr), port);
             client.getLocalPort();
-            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
             if(client.isConnected()) {
                 System.out.println("all is fine");
-                out.write("all is fine" + "\n");
-                out.flush();
+                InMessages in = new InMessages(client);
+                in.run();
+                OutMessages out = new OutMessages(client);
+                out.run();
             }
-            System.out.println(in.readLine());
-            in.close();
-            out.close();
+            else {
+                System.out.println("Ooops");
+            }
             client.close();
         }catch (Exception e){
             e.getStackTrace();
         }
 
     }
+}
+class InMessages extends Thread{
+    Socket socket;
+    public InMessages (Socket socket){
+        this.socket = socket;
+    }
 
+    @Override
+    public void run() {
+        try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+            String message = null;
+            while ((message == null) || (!message.equals("stop"))){
+                message = in.readLine();
+                if (!(message == null)) {
+                    System.out.println(message);
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+}
+
+class OutMessages extends Thread{
+    Socket socket;
+
+    public OutMessages(Socket socket){
+        this.socket = socket;
+    }
+
+    @Override
+    public void run() {
+        try(BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
+            String message = null;
+            while ((null == message) || (!message.equals("stop"))){
+                message = input.readLine();
+                if (!(null == message)) {
+                    out.write(message);
+                    out.flush();
+                }
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 }
