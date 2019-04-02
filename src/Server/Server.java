@@ -26,7 +26,9 @@ public class Server {
             clientSocket = serverSocket.accept();
             System.out.println("lololol");
             InMessages in = new InMessages(clientSocket);
-            in.run();
+            System.out.println("lololol");
+            in.start();
+            System.out.println("lololol");
         }catch (Exception e){
             e.getStackTrace();
         }
@@ -43,8 +45,11 @@ class InMessages extends Thread{
     public void run() {
         try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message = null;
+            System.out.println("in");
             while ((message == null) || (!message.equals("stop"))){
+                System.out.println("in");
                 message = in.readLine();
+                System.out.println("in");
                 if (!(message == null)) {
                     System.out.println(message);
                 }

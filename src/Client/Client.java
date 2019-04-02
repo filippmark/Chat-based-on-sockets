@@ -24,14 +24,13 @@ public class Client extends Thread{
             if(client.isConnected()) {
                 System.out.println("all is fine");
                 InMessages in = new InMessages(client);
-                in.run();
+                in.start();
                 OutMessages out = new OutMessages(client);
-                out.run();
+                out.start();
             }
             else {
                 System.out.println("Ooops");
             }
-            client.close();
         }catch (Exception e){
             e.getStackTrace();
         }
@@ -71,10 +70,13 @@ class OutMessages extends Thread{
     @Override
     public void run() {
         try(BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-            BufferedReader input = new BufferedReader(new InputStreamReader(System.in))) {
+            Scanner scanner = new Scanner(System.in)) {
             String message = null;
+            System.out.println("out");
             while ((null == message) || (!message.equals("stop"))){
-                message = input.readLine();
+                System.out.println("out");
+                message = scanner.nextLine();
+                System.out.println(message);
                 if (!(null == message)) {
                     out.write(message);
                     out.flush();
