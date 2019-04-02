@@ -11,6 +11,7 @@ import java.util.Scanner;
 public class Client extends Thread{
     static Socket client;
     private static BufferedWriter out;
+
     public static void main(String[] args){
         try {
             Scanner scanner = new Scanner(System.in);
@@ -19,9 +20,16 @@ public class Client extends Thread{
             System.out.println(ipAddr);
             System.out.println("Enter the port");
             int port = scanner.nextInt();
+            System.out.println();
             client = new Socket(InetAddress.getByName(ipAddr), port);
-            client.getLocalPort();
-            if(client.isConnected()) {
+            BufferedWriter outTemp = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+            System.out.println("Enter the nickname");
+            String nick = scanner.nextLine();
+            outTemp.write(nick);
+            outTemp.flush();
+            outTemp.close();
+            BufferedReader inTemp = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            if ((client.isConnected()) && (inTemp.readLine().equals("Ok"))) {
                 System.out.println("all is fine");
                 InMessages in = new InMessages(client);
                 in.start();
@@ -29,7 +37,7 @@ public class Client extends Thread{
                 out.start();
             }
             else {
-                System.out.println("Ooops");
+                System.out.println("Ooops, check your nick or ip and port");
             }
         }catch (Exception e){
             e.getStackTrace();
@@ -37,6 +45,7 @@ public class Client extends Thread{
 
     }
 }
+
 class InMessages extends Thread{
     Socket socket;
     public InMessages (Socket socket){
