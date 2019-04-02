@@ -13,7 +13,6 @@ public class Server {
     //static ServerSocket serverSocket;
     static Socket clientSocket;
     private static BufferedReader in;
-    private static BufferedWriter out;
     static int port = 0;
 
     public static void main(String[] args){
@@ -24,11 +23,8 @@ public class Server {
         try(ServerSocket serverSocket = new ServerSocket(0)){
             System.out.println(serverSocket.getLocalPort());
             clientSocket = serverSocket.accept();
-            System.out.println("lololol");
             InMessages in = new InMessages(clientSocket);
-            System.out.println("lololol");
             in.start();
-            System.out.println("lololol");
         }catch (Exception e){
             e.getStackTrace();
         }
@@ -45,11 +41,8 @@ class InMessages extends Thread{
     public void run() {
         try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
             String message = null;
-            System.out.println("in");
             while ((message == null) || (!message.equals("stop"))){
-                System.out.println("in");
                 message = in.readLine();
-                System.out.println("in");
                 if (!(message == null)) {
                     System.out.println(message);
                 }

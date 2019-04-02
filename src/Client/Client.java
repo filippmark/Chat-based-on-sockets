@@ -72,13 +72,11 @@ class OutMessages extends Thread{
         try(BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             Scanner scanner = new Scanner(System.in)) {
             String message = null;
-            System.out.println("out");
             while ((null == message) || (!message.equals("stop"))){
-                System.out.println("out");
                 message = scanner.nextLine();
                 System.out.println(message);
                 if (!(null == message)) {
-                    out.write(message);
+                    out.write(message + '\n');
                     out.flush();
                 }
             }
