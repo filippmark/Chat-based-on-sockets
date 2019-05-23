@@ -11,25 +11,25 @@ import java.util.Scanner;
 public class Client extends Thread{
     static Socket client;
     private static BufferedWriter out;
+    static String nick;
 
     public static void main(String[] args){
         try {
             Scanner scanner = new Scanner(System.in);
             System.out.println("Enter the ip address");
             String ipAddr = scanner.nextLine();
-            System.out.println(ipAddr);
             System.out.println("Enter the port");
             int port = scanner.nextInt();
-            System.out.println();
+            System.out.println("Enter the nickname");
+            scanner.nextLine();
+            nick = scanner.nextLine();
             client = new Socket(InetAddress.getByName(ipAddr), port);
             BufferedWriter outTemp = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-            System.out.println("Enter the nickname");
-            String nick = scanner.nextLine();
-            outTemp.write(nick);
+            outTemp.write(nick + '\n');
             outTemp.flush();
-            outTemp.close();
             BufferedReader inTemp = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            if ((client.isConnected()) && (inTemp.readLine().equals("Ok"))) {
+            String servAns = inTemp.readLine();
+            if ((client.isConnected()) && (servAns.equals("Ok"))) {
                 System.out.println("all is fine");
                 InMessages in = new InMessages(client);
                 in.start();
@@ -37,7 +37,10 @@ public class Client extends Thread{
                 out.start();
             }
             else {
-                System.out.println("Ooops, check your nick or ip and port");
+                if (servAns.equals("No"))
+                    System.out.println("Ooops, change your nick and try again");
+                else
+                    System.out.println("Ooops, check ip and port");
             }
         }catch (Exception e){
             e.getStackTrace();
@@ -58,10 +61,11 @@ class InMessages extends Thread{
             String message = null;
             while ((message == null) || (!message.equals("stop"))){
                 message = in.readLine();
-                if (!(message == null)) {
+                if (!(message.equals("stop"))) {
                     System.out.println(message);
                 }
             }
+            socket.close();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -71,7 +75,6 @@ class InMessages extends Thread{
 
 class OutMessages extends Thread{
     Socket socket;
-
     public OutMessages(Socket socket){
         this.socket = socket;
     }
@@ -83,13 +86,16 @@ class OutMessages extends Thread{
             String message = null;
             while ((null == message) || (!message.equals("stop"))){
                 message = scanner.nextLine();
-                System.out.println(message);
-                if (!(null == message)) {
+                System.out.println("You: " + message);
+                if ((!message.equals("stop"))) {
+                    out.write(Client.nick + ": " + message + '\n');
+                    out.flush();
+                }
+                else{
                     out.write(message + '\n');
                     out.flush();
                 }
             }
-
         }catch (Exception e){
             e.printStackTrace();
         }

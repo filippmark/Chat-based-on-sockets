@@ -27,57 +27,90 @@ public class Server {
                 clientSocket = serverSocket.accept();
                 BufferedReader inTemp = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 String nick = inTemp.readLine();
+                System.out.println(nick);
                 BufferedWriter outTemp = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-                if (nicknames.indexOf(nick) == -1) {
-                    outTemp.write("Ok");
+                if ((nicknames.size() == 0) || (nicknames.indexOf(nick) == -1)) {
+                    outTemp.write("Ok" + '\n');
+                    outTemp.flush();
                     nicknames.add(nick);
-                    connections.add(new Connection(clientSocket, nick));
-                    inTemp.close();
+                    connections.add(new Connection(clientSocket, nick, inTemp, outTemp));
+                    outTemp.write("Amount of connected users " + nicknames.size() + '\n');
+                    outTemp.flush();
                     flag = false;
                 } else {
-                    outTemp.write("No");
+                    outTemp.write("No" + '\n');
+                    outTemp.flush();
+                    outTemp.close();
                     inTemp.close();
                     clientSocket.close();
                 }
-                InMessages in = new InMessages(clientSocket);
-                in.start();
             }
         }catch (Exception e){
             e.getStackTrace();
         }
     }
+
+
 }
 
-class InMessages extends Thread{
+class ResendMessages extends Thread{
     Socket socket;
-    public InMessages (Socket socket){
+    BufferedReader in;
+    String nick;
+
+    public ResendMessages (Socket socket, BufferedReader in, String nick){
+        this.in = in;
         this.socket = socket;
+        this.nick = nick;
     }
 
     @Override
     public void run() {
-        try(BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+        try {
             String message = null;
-            while ((message == null) || (!message.equals("stop"))){
+            while ((message == null) || (!message.equals("stop"))) {
                 message = in.readLine();
-                if (!(message == null)) {
-                    System.out.println(message);
+                if (!(message.equals("stop"))) {
+                    for (Connection el : Server.connections) {
+                        try  {
+                            if (!socket.equals(el.socket)) {
+                                el.out.write(message + '\n');
+                                el.out.flush();
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
+            Connection connection = Server.connections.remove(Server.nicknames.indexOf(nick));
+            Server.nicknames.remove(Server.nicknames.indexOf(nick));
+            connection.out.write("stop" + '\n');
+            connection.out.flush();
+            connection.out.close();
+            connection.in.close();
+            connection.socket.close();
+
         }catch (Exception e){
             e.printStackTrace();
         }
     }
-
 }
 
 class Connection{
     Socket socket;
     String nick;
+    BufferedReader in;
+    BufferedWriter out;
+    ResendMessages inMes;
 
-    public Connection(Socket socket, String nick){
+    public Connection(Socket socket, String nick, BufferedReader in, BufferedWriter out){
         this.socket = socket;
         this.nick = nick;
+        this.in = in;
+        this.out = out;
+        inMes = new ResendMessages(socket, in, nick);
+        inMes.start();
     }
 
 }
